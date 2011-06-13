@@ -43,9 +43,9 @@ import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -58,17 +58,17 @@ import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AdapterView.OnItemClickListener;
 
 import com.trilead.ssh2.crypto.Base64;
 import com.trilead.ssh2.crypto.PEMDecoder;
@@ -246,6 +246,14 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 
 			new AlertDialog.Builder(PubkeyListActivity.this)
 				.setView(view)
+				.setNeutralButton("2D Code", new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int which) {
+						Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+				        intent.setPackage("com.google.zxing.client.android");
+				        intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+				        startActivityForResult(intent, 0);
+					}
+				})
 				.setPositiveButton(R.string.pubkey_unlock, new DialogInterface.OnClickListener() {
 					public void onClick(DialogInterface dialog, int which) {
 						handleAddKey(pubkey, passwordField.getText().toString());
@@ -487,7 +495,8 @@ public class PubkeyListActivity extends ListActivity implements EventListener {
 	protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
 		super.onActivityResult(requestCode, resultCode, intent);
 
-		switch (requestCode) {
+		switch (requestCode)
+		{
 		case REQUEST_CODE_PICK_FILE:
 			if (resultCode == RESULT_OK && intent != null) {
 				Uri uri = intent.getData();

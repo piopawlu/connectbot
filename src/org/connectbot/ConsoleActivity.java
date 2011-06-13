@@ -52,18 +52,19 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
-import android.view.WindowManager;
-import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View.OnClickListener;
 import android.view.View.OnKeyListener;
 import android.view.View.OnTouchListener;
+import android.view.ViewConfiguration;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -73,7 +74,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
-import android.widget.AdapterView.OnItemClickListener;
 
 import com.nullwire.trace.ExceptionHandler;
 
@@ -256,6 +256,27 @@ public class ConsoleActivity extends Activity {
 	}
 
 	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+	    if (requestCode == 0) {
+	        if (resultCode == RESULT_OK) {
+	            String contents = intent.getStringExtra("SCAN_RESULT");
+	            // Handle successful scan
+
+	            PromptHelper helper = getCurrentPromptHelper();
+				if(helper == null) return;
+				helper.setResponse(contents);
+				updatePromptVisible();
+
+	        } else if (resultCode == RESULT_CANCELED) {
+	            // Handle cancel
+	        	PromptHelper helper = getCurrentPromptHelper();
+	        	helper.setResponse("");
+	        	updatePromptVisible();
+	        }
+	    }
+	}
+
+	@Override
 	public void onCreate(Bundle icicle) {
 		super.onCreate(icicle);
 
@@ -294,15 +315,25 @@ public class ConsoleActivity extends Activity {
 				// pass collected password down to current terminal
 				String value = stringPrompt.getText().toString();
 
-				PromptHelper helper = getCurrentPromptHelper();
-				if(helper == null) return false;
-				helper.setResponse(value);
+				if( value.equals("") )
+				{
+					Intent intent = new Intent("com.google.zxing.client.android.SCAN");
+			        intent.setPackage("com.google.zxing.client.android");
+			        intent.putExtra("SCAN_MODE", "QR_CODE_MODE");
+			        startActivityForResult(intent, 0);
 
-				// finally clear password for next user
-				stringPrompt.setText("");
-				updatePromptVisible();
+					return false;
+				} else {
+					PromptHelper helper = getCurrentPromptHelper();
+					if(helper == null) return false;
+					helper.setResponse(value);
 
-				return true;
+					// finally clear password for next user
+					stringPrompt.setText("");
+					updatePromptVisible();
+
+					return true;
+				}
 			}
 		});
 
